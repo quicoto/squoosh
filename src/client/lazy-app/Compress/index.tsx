@@ -32,6 +32,7 @@ import WorkerBridge from '../worker-bridge';
 import { resize } from 'features/processors/resize/client';
 import type SnackBarElement from 'shared/custom-els/snack-bar';
 import { drawableToImageData } from '../util/canvas';
+import { parseURLConfig, URLConfig } from '../util/url-params';
 
 export type OutputType = EncoderType | 'identity';
 
@@ -277,43 +278,58 @@ function updateDocumentTitle(loadingFileInfo: LoadingFileInfo): void {
   document.title = title;
 }
 
+function getInitialSides(urlConfig: URLConfig): [Side, Side] {
+  const leftSide: Side = localStorage.getItem('leftSideSettings')
+    ? {
+        ...JSON.parse(localStorage.getItem('leftSideSettings') as string),
+        loading: false,
+      }
+    : {
+        latestSettings: {
+          processorState: defaultProcessorState,
+          encoderState: undefined,
+        },
+        loading: false,
+      };
+  let rightSide: Side = localStorage.getItem('rightSideSettings')
+    ? {
+        ...JSON.parse(localStorage.getItem('rightSideSettings') as string),
+        loading: false,
+      }
+    : {
+        latestSettings: {
+          processorState: defaultProcessorState,
+          encoderState: {
+            type: 'mozJPEG',
+            options: encoderMap.mozJPEG.meta.defaultOptions,
+          },
+        },
+        loading: false,
+      };
+
+  if (urlConfig.encoderState) {
+    rightSide = cleanSet(
+      rightSide,
+      'latestSettings.encoderState',
+      urlConfig.encoderState,
+    );
+  }
+
+  return [leftSide, rightSide];
+}
+
 export default class Compress extends Component<Props, State> {
   widthQuery = window.matchMedia('(max-width: 599px)');
+  private readonly urlConfig = parseURLConfig(
+    new URL(location.href).searchParams,
+  );
 
   state: State = {
     source: undefined,
     loading: false,
     preprocessorState: defaultPreprocessorState,
-    // Tasking catched side settings if available otherwise taking default settings
-    sides: [
-      localStorage.getItem('leftSideSettings')
-        ? {
-            ...JSON.parse(localStorage.getItem('leftSideSettings') as string),
-            loading: false,
-          }
-        : {
-            latestSettings: {
-              processorState: defaultProcessorState,
-              encoderState: undefined,
-            },
-            loading: false,
-          },
-      localStorage.getItem('rightSideSettings')
-        ? {
-            ...JSON.parse(localStorage.getItem('rightSideSettings') as string),
-            loading: false,
-          }
-        : {
-            latestSettings: {
-              processorState: defaultProcessorState,
-              encoderState: {
-                type: 'mozJPEG',
-                options: encoderMap.mozJPEG.meta.defaultOptions,
-              },
-            },
-            loading: false,
-          },
-    ],
+    // Taking cached side settings if available, otherwise taking defaults.
+    sides: getInitialSides(this.urlConfig),
     mobileView: this.widthQuery.matches,
   };
 
@@ -703,16 +719,44 @@ export default class Compress extends Component<Props, State> {
           );
         }
 
-        // Set default resize values
+        const urlWidth = this.urlConfig.width;
+        const rightURLResizeState:
+          | Partial<ProcessorState['resize']>
+          | undefined =
+          urlWidth === undefined
+            ? undefined
+            : {
+                width: urlWidth,
+                height: Math.max(
+                  1,
+                  Math.round((decoded.height * urlWidth) / decoded.width),
+                ),
+                enabled: true,
+              };
+
+        if (rightURLResizeState) {
+          sideJobStates[1] = {
+            ...sideJobStates[1],
+            processorState: cleanMerge(
+              sideJobStates[1].processorState,
+              'resize',
+              rightURLResizeState,
+            ),
+          };
+          this.activeSideJobs[1] = sideJobStates[1];
+        }
+
+        // Set default resize values, applying URL configuration to the right side.
         this.setState((currentState) => {
           if (mainSignal.aborted) return {};
-          const sides = currentState.sides.map((side) => {
+          const sides = currentState.sides.map((side, index) => {
             const resizeState: Partial<ProcessorState['resize']> = {
               width: decoded.width,
               height: decoded.height,
               method: vectorImage ? 'vector' : 'lanczos3',
               // Disable resizing, to make it clearer to the user that something changed here
               enabled: false,
+              ...(index === 1 ? rightURLResizeState : undefined),
             };
             return cleanMerge(
               side,

@@ -13,6 +13,25 @@ However, Squoosh utilizes Google Analytics to collect the following:
 - If Squoosh PWA, the type of Squoosh installation.
 - If Squoosh PWA, the installation time and date.
 
+# URL configuration
+
+The output shown on the right can be configured with URL query parameters:
+
+- `codec`: `avif` or `webp`.
+- `quality`: an integer from 0 to 100.
+- `effort`: an integer from 0 to 10 for AVIF, or 0 to 6 for WebP.
+- `width`: a positive integer. This enables resizing and calculates the height from the source image's aspect ratio.
+
+URL configuration overrides saved settings for the right side. Invalid or out-of-range values are ignored.
+
+For AVIF at quality 50 and effort 7, resized to 2000px wide:
+
+<https://squoosh.app/?codec=avif&quality=50&effort=7&width=2000>
+
+For WebP at quality 85 and effort 6, resized to 1600px wide:
+
+<https://squoosh.app/?codec=webp&quality=85&effort=6&width=1600>
+
 # Developing
 
 To develop for Squoosh:
