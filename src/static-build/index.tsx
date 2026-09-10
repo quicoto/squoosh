@@ -12,7 +12,7 @@
  */
 import { h } from 'preact';
 
-import { renderPage, writeFiles } from './utils';
+import { publicPath, renderPage, writeFiles } from './utils';
 import IndexPage from './pages/index';
 import * as iconLargeMaskable from 'img-url:static-build/assets/icon-large-maskable.png';
 import * as iconLarge from 'img-url:static-build/assets/icon-large.png';
@@ -57,7 +57,7 @@ const toOutput: Output = {
   'manifest.json': JSON.stringify({
     name: 'Squoosh',
     short_name: 'Squoosh',
-    start_url: '/?utm_medium=PWA&utm_source=launcher',
+    start_url: `${publicPath}?utm_medium=PWA&utm_source=launcher`,
     display: 'standalone',
     orientation: 'any',
     background_color: '#fff',
@@ -81,7 +81,7 @@ const toOutput: Output = {
     categories: ['photo', 'productivity', 'utilities'],
     screenshots,
     share_target: {
-      action: '/?utm_medium=PWA&utm_source=share-target&share-target',
+      action: `${publicPath}?utm_medium=PWA&utm_source=share-target&share-target`,
       method: 'POST',
       enctype: 'multipart/form-data',
       params: {

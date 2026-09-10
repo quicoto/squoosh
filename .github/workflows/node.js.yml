@@ -2,21 +2,38 @@ name: Node.js CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: write
+
 jobs:
   build:
-
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - id: nvmrc
-      uses: browniebroke/read-nvmrc-action@v1
-    - uses: actions/setup-node@v1
-      with:
-        node-version: '${{ steps.nvmrc.outputs.node_version }}'
-    - run: npm ci
-    - run: npm run build
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          SQUOOSH_PUBLIC_PATH: /${{ github.event.repository.name }}/
+          DEPLOY_PRIME_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+
+      - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          publish_branch: gh-pages

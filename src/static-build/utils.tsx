@@ -57,6 +57,12 @@ export function escapeStyleScriptContent(str: string): string {
     .replace(/<\/style/g, '<\\/style');
 }
 
+const publicPathName = (process.env.SQUOOSH_PUBLIC_PATH || '')
+  .split('/')
+  .filter(Boolean)
+  .join('/');
+export const publicPath = publicPathName ? `/${publicPathName}/` : '/';
+
 /**
  * Origin of the site, depending on the environment.
  */
