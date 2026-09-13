@@ -1,5 +1,6 @@
 import { h, Component } from 'preact';
 
+import logo from 'url:shared/prerendered-app/Intro/imgs/logo.svg';
 import * as style from './style.css';
 import 'add-css:./style.css';
 import {
@@ -1038,6 +1039,9 @@ export default class Compress extends Component<Props, State> {
             />
           </svg>
         </button>
+        <a class={style.home} href={`/${location.search}`}>
+          <img src={logo} alt="Squoosh home" width="58" height="58" />
+        </a>
         {mobileView ? (
           <div class={style.options}>
             <multi-panel class={style.multiPanel} open-one-only>

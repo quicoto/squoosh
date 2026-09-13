@@ -131,6 +131,34 @@
   }
 }
 
+.home {
+  position: relative;
+  grid-area: header;
+  margin: 9px;
+  justify-self: end;
+  align-self: start;
+
+  & > img {
+    display: block;
+    width: 47px;
+    height: 47px;
+  }
+
+  &:focus {
+    outline: 5px solid var(--deep-blue);
+    outline-offset: 2px;
+  }
+
+  @media (min-width: 600px) {
+    margin: 14px;
+
+    & > img {
+      width: 58px;
+      height: 58px;
+    }
+  }
+}
+
 @keyframes strokePulse {
   from {
     stroke-width: 8px;
